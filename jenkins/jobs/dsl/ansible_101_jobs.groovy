@@ -8,6 +8,9 @@ def projectFolderName = "${PROJECT_NAME}"
 def installAnsible = freeStyleJob(projectFolderName + "/1_Install_Ansible")
 def runAdhocCommands = freeStyleJob(projectFolderName + "/2_Run_Example_Adhoc_Commands")
 def runYourAdhocCommand = freeStyleJob(projectFolderName + "/3_Run_Your_Adhoc_Command")
+def runPlaybook = freeStyleJob(projectFolderName + "/4_Run_A_Playbook")
+
+
 
 // Resuable work
 
@@ -333,4 +336,67 @@ ${ANSIBLE_COMMAND}
             |'''.stripMargin() + cleanUp)
   }
 }
+
+
+runPlaybook.with{
+  description("This job runs the playbook you provide (hint ensure hosts is all, web or db).  http://docs.ansible.com/ansible/playbooks_intro.html")
+  parameters {
+        textParam("ANSIBLE_PLAYBOOK", '''
+
+---
+- hosts: web
+  remote_user: root
+
+  tasks:
+  - name: ensure apache is at the latest version
+    yum: name=httpd state=latest
+  - name: write the apache config file
+    template: src=/srv/httpd.j2 dest=/etc/httpd.conf
+
+- hosts: db
+  remote_user: root
+
+  tasks:
+  - name: ensure postgresql is at the latest version
+    yum: name=postgresql state=latest
+  - name: ensure that postgresql is started
+    service: name=postgresql state=started
+
+''', "Ansible playbook to run against the server filter you provide.")
+    }
+  environmentVariables {
+      env('WORKSPACE_NAME',workspaceFolderName)
+      env('PROJECT_NAME',projectFolderName)
+  }
+  wrappers {
+    preBuildCleanup()
+    injectPasswords()
+    maskPasswords()
+    sshAgent("adop-jenkins-master")
+  }
+  label("docker")
+  steps {
+    shell(setupEnv + '''set -x
+            |
+cat <<EOF
+
+----- Let's get Ansible to run the command you supplied ${ANSIBLE_COMMAND}
+
+EOF
+
+cat $ANSIBLE_COMMAND > playbook.yml
+
+docker run --rm -t --net=${LAB_NET} \\
+-v /var/run/docker.sock:/var/run/docker.sock \\
+-v jenkins_slave_home:/jenkins_slave_home/ \\
+--workdir /jenkins_slave_home/${PROJECT_NAME}/4_Run_A_Playbook \\
+ansiblectl${BUILD_NUMBER} \\
+ansible-playbook playbook.yml
+
+            |
+            |'''.stripMargin() + cleanUp)
+  }
+}
+
+
 
