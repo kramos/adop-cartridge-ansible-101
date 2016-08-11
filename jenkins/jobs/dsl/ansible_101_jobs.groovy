@@ -38,7 +38,7 @@ installAnsible.with{
   label("docker")
   steps {
     shell('''set -xe
-            |echo  '''.stripMargin()) + desc + '''
+            |echo  '''.stripMargin() + desc + '''
             |
             |cat <<EOF > Dockerfile
             |FROM centos:latest
