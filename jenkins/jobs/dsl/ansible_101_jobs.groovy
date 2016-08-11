@@ -320,7 +320,7 @@ runYourAdhocCommand.with{
   }
   label("docker")
   steps {
-    shell(setupEnv + '''set -x
+    shell(setupEnv + '''
             |
 cat <<EOF
 
@@ -342,7 +342,6 @@ runPlaybook.with{
   description("This job runs the playbook you provide (hint ensure hosts is all, web or db).  http://docs.ansible.com/ansible/playbooks_intro.html")
   parameters {
         textParam("ANSIBLE_PLAYBOOK", '''
-
 ---
 - hosts: web
   remote_user: root
@@ -376,22 +375,24 @@ runPlaybook.with{
   }
   label("docker")
   steps {
-    shell(setupEnv + '''set -x
+    shell(setupEnv + '''
             |
 cat <<EOF
 
------ Let's get Ansible to run the command you supplied ${ANSIBLE_COMMAND}
+----- Let's get Ansible to run the playbook
+
+$ANSIBLE_PLAYBOOK
 
 EOF
 
-cat $ANSIBLE_COMMAND > playbook.yml
+echo "$ANSIBLE_PLAYBOOK" > playbook.yml
 
 docker run --rm -t --net=${LAB_NET} \\
 -v /var/run/docker.sock:/var/run/docker.sock \\
 -v jenkins_slave_home:/jenkins_slave_home/ \\
 --workdir /jenkins_slave_home/${PROJECT_NAME}/4_Run_A_Playbook \\
 ansiblectl${BUILD_NUMBER} \\
-ansible-playbook playbook.yml
+ansible-playbook -b playbook.yml
 
             |
             |'''.stripMargin() + cleanUp)
