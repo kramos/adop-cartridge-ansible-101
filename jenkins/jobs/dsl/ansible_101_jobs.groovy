@@ -116,14 +116,19 @@ cat <<EOF
 ---------------------------------------------------------------------------------------------------------
 
 ----- Now we're finally ready to use our control node to run some interesting adhoc Ansible commands.
+
+EOF
 '''
 
 
 
 def cleanUp = '''
+
+cat <<EOF
+
 ---------------------------------------------------------------------------------------------------------
 
------ Now let's clean up (sort of we’ll leave the images)
+----- Now let's clean up (sort of we'll leave the images)
 
 
 EOF
@@ -137,8 +142,7 @@ docker network rm $LAB_NET
 
 
 installAnsible.with{
-  def desc = "\\n\\n-------- This job installs Ansible \\(in a Docker container for the sake of doing it somewhere clean\\) using Pip.  For more information see: http://docs.ansible.com/ansible/intro_installation.html\\n\\n"
-  description(desc)
+  description("This job installs Ansible (in a Docker container for the sake of doing it somewhere clean) using Yum.  For more information see: http://docs.ansible.com/ansible/intro_installation.html")
   wrappers {
     preBuildCleanup()
     injectPasswords()
@@ -153,7 +157,7 @@ installAnsible.with{
   steps {
     shell('''set -e
             |set +x 
-	    |printf  '''.stripMargin() + desc + '''
+	    |echo Build a docker image wit Ansible installed in it
             |
             |cat <<EOF > Dockerfile
             |FROM centos:latest
@@ -163,14 +167,14 @@ installAnsible.with{
             |docker build -t ansible${BUILD_NUMBER} .
             |printf "\\n\\n-------- Let's now test the Ansible install\\n\\n"
             |docker run --rm -t ansible${BUILD_NUMBER} ansible --version
-            |printf "\\n\\n-------- That looked good!\\n\\n-------- Let's now just remove our temporary image\\n\\n
+            |printf "\\n\\n-------- That looked good!\\n\\n-------- Let's now just remove our temporary image\\n\\n"
             |docker rmi -f ansible${BUILD_NUMBER}
             |'''.stripMargin())
   }
 }
 
 runAdhocCommands.with{
-  description("This job created a test environment and runs ad hoc Ansible commands against it http://docs.ansible.com/ansible/intro_adhoc.html")
+  description("This job creates a test environment and runs ad hoc Ansible commands against it http://docs.ansible.com/ansible/intro_adhoc.html")
   environmentVariables {
       env('WORKSPACE_NAME',workspaceFolderName)
       env('PROJECT_NAME',projectFolderName)
@@ -285,7 +289,40 @@ docker run --rm -t --net=${LAB_NET} \
 ansiblectl${BUILD_NUMBER} \
 ansible web -b -m user -a "name=johnd comment=\"John Doe\" uid=1040"
 
+            |
+            |'''.stripMargin() + cleanUp)
+  }
+}
+
+runYourAdhocCommand.with{
+  description("This job creates a test environment and runs the ad hoc Ansible commands they you pass in as a parameter.   http://docs.ansible.com/ansible/intro_adhoc.html")
+  parameters {
+        stringParam("ANSIBLE_COMMAND", 'ansible all -m ping', "Ansible command to run against your hosts (hint types are: web and db)")
+    }
+  environmentVariables {
+      env('WORKSPACE_NAME',workspaceFolderName)
+      env('PROJECT_NAME',projectFolderName)
+  }
+  wrappers {
+    preBuildCleanup()
+    injectPasswords()
+    maskPasswords()
+    sshAgent("adop-jenkins-master")
+  }
+  label("docker")
+  steps {
+    shell(setupEnv + '''set -x
+            |
 cat <<EOF
+
+----- Let's get Ansible to run the command you supplied ${ANSIBLE_COMMAND}
+
+EOF
+docker run --rm -t --net=${LAB_NET} \
+-v /var/run/docker.sock:/var/run/docker.sock \
+ansiblectl${BUILD_NUMBER} \
+${ANSIBLE_COMMAND}
+
             |
             |'''.stripMargin() + cleanUp)
   }
