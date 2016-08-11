@@ -65,7 +65,7 @@ installAnsible.with{
   }
 }
 
-install.with{
+runAdhocCommands.with{
   description("This job performs an npm install")
   parameters{
     stringParam("B",'',"Parent build number")
@@ -107,80 +107,4 @@ install.with{
     }
   }
 }
-
-test.with{
-  description("When triggered this will run the tests.")
-  parameters{
-    stringParam("B",'',"Parent build number")
-    stringParam("PARENT_BUILD","Get_Code","Parent build name")
-  }
-  wrappers {
-    preBuildCleanup()
-    injectPasswords()
-    maskPasswords()
-    sshAgent("adop-jenkins-master")
-  }
-  environmentVariables {
-      env('WORKSPACE_NAME',workspaceFolderName)
-      env('PROJECT_NAME',projectFolderName)
-  }
-  label("docker")
-  steps {
-    shell('''set -x
-            |echo Run unit tests
-            |
-            |docker run \\
-            |		--rm \\
-            |		-v /var/run/docker.sock:/var/run/docker.sock \\
-            |		-v jenkins_slave_home:/jenkins_slave_home/ \\
-            |		--workdir /jenkins_slave_home/${PROJECT_NAME}/Get_Code \\
-            |		node \\
-            |		npm run test
-            |'''.stripMargin())
-  }
-  publishers{
-    downstreamParameterized{
-      trigger(projectFolderName + "/Lint"){
-        condition("UNSTABLE_OR_BETTER")
-        parameters{
-          predefinedProp("B",'${BUILD_NUMBER}')
-          predefinedProp("PARENT_BUILD", '${JOB_NAME}')
-        }
-      }
-    }
-  }
-}
-
-lint.with{
-  description("This job will perform static code analysis")
-  parameters{
-    stringParam("B",'',"Parent build number")
-    stringParam("PARENT_BUILD","Get_Code","Parent build name")
-  }
-  environmentVariables {
-      env('WORKSPACE_NAME',workspaceFolderName)
-      env('PROJECT_NAME',projectFolderName)
-  }
-  wrappers {
-    preBuildCleanup()
-    injectPasswords()
-    maskPasswords()
-    sshAgent("adop-jenkins-master")
-  }
-  label("docker")
-  steps {
-    shell('''set -x
-            |echo Run static code analysis 
-            |
-            |docker run \\
-            |		--rm \\
-            |		-v /var/run/docker.sock:/var/run/docker.sock \\
-            |		-v jenkins_slave_home:/jenkins_slave_home/ \\
-            |		--workdir /jenkins_slave_home/${PROJECT_NAME}/Get_Code \\
-            |		node \\
-            |		npm run lint
-            |'''.stripMargin())
-  }
-}
-
 
