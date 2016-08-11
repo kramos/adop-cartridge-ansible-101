@@ -102,7 +102,12 @@ EOF
 docker-compose up -d
 sleep 5
 
-printf \"\n\n-------- Great we have some containers running let's just prove that.\n\"
+cat <<EOF
+
+----- Great we have some containers running let's just prove that.
+
+EOF
+
 set -x
 docker-compose ps
 docker exec -t ${THIS_DIR}_web-node-1_1 uname -a
@@ -187,21 +192,22 @@ runAdhocCommands.with{
   }
   label("docker")
   steps {
-    shell(setupEnv + '''set -x
+    shell(setupEnv + '''
             |
+cat <<EOF
+
 
 ----- Let's get Ansible to check the date on all servers: ansible all -a date
 
 
 EOF
-docker run --rm -t --net=${LAB_NET} \
--v /var/run/docker.sock:/var/run/docker.sock \
-ansiblectl${BUILD_NUMBER} \
+docker run --rm -t --net=${LAB_NET} \\
+-v /var/run/docker.sock:/var/run/docker.sock \\
+ansiblectl${BUILD_NUMBER} \\
 ansible all -a date
 
 
 cat <<EOF
-
 
 
 ---------------------------------------------------------------------------------------------------------
@@ -210,9 +216,9 @@ cat <<EOF
 
 
 EOF
-docker run --rm -t --net=${LAB_NET} \
--v /var/run/docker.sock:/var/run/docker.sock \
-ansiblectl${BUILD_NUMBER} \
+docker run --rm -t --net=${LAB_NET} \\
+-v /var/run/docker.sock:/var/run/docker.sock \\
+ansiblectl${BUILD_NUMBER} \\
 ansible all -a date
 
 
@@ -227,9 +233,9 @@ cat <<EOF
 
 EOF
 
-docker run --rm -t --net=${LAB_NET} \
--v /var/run/docker.sock:/var/run/docker.sock \
-ansiblectl${BUILD_NUMBER} \
+docker run --rm -t --net=${LAB_NET} \\
+-v /var/run/docker.sock:/var/run/docker.sock \\
+ansiblectl${BUILD_NUMBER} \\
 ansible web -m ping
 
 cat <<EOF
@@ -248,9 +254,9 @@ cat <<EOF
 EOF
 
 
-docker run --rm -t --net=${LAB_NET} \
--v /var/run/docker.sock:/var/run/docker.sock \
-ansiblectl${BUILD_NUMBER} \
+docker run --rm -t --net=${LAB_NET} \\
+-v /var/run/docker.sock:/var/run/docker.sock \\
+ansiblectl${BUILD_NUMBER} \\
 ansible db -m ping
 
 cat <<EOF
@@ -268,9 +274,9 @@ ansible all -m setup
 EOF
 
 
-docker run --rm -t --net=${LAB_NET} \
--v /var/run/docker.sock:/var/run/docker.sock \
-ansiblectl${BUILD_NUMBER} \
+docker run --rm -t --net=${LAB_NET} \\
+-v /var/run/docker.sock:/var/run/docker.sock \\
+ansiblectl${BUILD_NUMBER} \\
 ansible db -m setup
 
 cat <<EOF
@@ -285,9 +291,9 @@ EOF
 
 
 docker run --rm -t --net=${LAB_NET} \
--v /var/run/docker.sock:/var/run/docker.sock \
-ansiblectl${BUILD_NUMBER} \
-ansible web -b -m user -a "name=johnd comment=\"John Doe\" uid=1040"
+-v /var/run/docker.sock:/var/run/docker.sock \\
+ansiblectl${BUILD_NUMBER} \\
+ansible web -b -m user -a "name=johnd comment=\\"John Doe\\" uid=1040"
 
             |
             |'''.stripMargin() + cleanUp)
@@ -318,9 +324,9 @@ cat <<EOF
 ----- Let's get Ansible to run the command you supplied ${ANSIBLE_COMMAND}
 
 EOF
-docker run --rm -t --net=${LAB_NET} \
--v /var/run/docker.sock:/var/run/docker.sock \
-ansiblectl${BUILD_NUMBER} \
+docker run --rm -t --net=${LAB_NET} \\
+-v /var/run/docker.sock:/var/run/docker.sock \\
+ansiblectl${BUILD_NUMBER} \\
 ${ANSIBLE_COMMAND}
 
             |
