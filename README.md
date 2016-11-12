@@ -2,22 +2,23 @@
 
 A [Cartridge](http://accenture.github.io/adop-docker-compose/docs/operating/cartridges/) is a set of resources that are loaded into the Platform for a particular [ADOP](http://accenture.github.io/adop-docker-compose/) 	 project. They may contain anything from a simple reference implementation for a technology to a set of best practice examples for building, deploying, and managing a technology stack that can be used by a project.
 
-TODO
-
+This cartridge makes it easy to play with Ansible.  See [this blog](https://markosrendell.wordpress.com/?p=553&preview=true) for more information.
 
 
 ## Source code repositories
 
-Cartrige loads the source code repositories
-
-
-* [TODO](https://TODO)
+None
 
 ## Jenkins Jobs
 
-This cartridge generates the jenkins jobs and pipeline views to perform Continuous Delivery of a Docker container
+This cartridge generates these jenkins jobs:
 
-* TODO: List jobs 
+* 1_Install_Ansible
+* 2_Run_Example_Adhoc_Commands
+* 3_Run_Your_Adhoc_Command
+* 4_Run_A_Playbook
+
+See [this blog](https://markosrendell.wordpress.com/?p=553&preview=true) for more information.
 
 # License
 Please view [license information](LICENSE.md) for the software contained on this image.
